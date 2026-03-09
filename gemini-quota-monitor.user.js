@@ -3,7 +3,7 @@
 // @namespace    http://tampermonkey.net/gemini.quota.monitor
 // @version      1.5
 // @description  跨站（AI Studio & Gemini Web）实时监控免费额度，每日 UTC 00:00 自动重置
-// @author       YourName
+// @author       Sut
 // @match        https://aistudio.google.com/*
 // @match        https://gemini.google.com/*
 // @updateURL    https://github.com/sutchan/Gemini-Quota-Monitor/raw/refs/heads/main/gemini-quota-monitor.user.js
@@ -40,10 +40,8 @@
 
     // --- UI 渲染引擎 ---
     function injectUI() {
-        // 如果已存在则不重复创建
         if (document.getElementById("gemini-quota-monitor-ui")) return;
         
-        // 确保 body 已加载
         if (!document.body) {
             setTimeout(injectUI, 200);
             return;
@@ -51,8 +49,6 @@
 
         const container = document.createElement('div');
         container.id = "gemini-quota-monitor-ui";
-        
-        // 使用 cssText 强制注入最高优先级样式
         container.style.cssText = `
             position: fixed !important;
             bottom: 30px !important;
@@ -69,34 +65,76 @@
             box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important;
             backdrop-filter: blur(10px) !important;
             -webkit-backdrop-filter: blur(10px) !important;
-            pointer-events: none !important;
             display: block !important;
             line-height: 1.4 !important;
+            cursor: move !important;
+            user-select: none !important;
+        `;
+        
+        container.innerHTML = `
+            <div id="gemini-quota-header" style="display: flex !important; justify-content: space-between !important; align-items: center !important; margin-bottom: 8px !important;">
+                <span style="opacity: 0.8 !important; font-size: 12px !important; pointer-events: none;">Gemini 额度</span>
+                <button id="gemini-quota-collapse" style="background: none !important; border: none !important; color: white !important; cursor: pointer !important; font-size: 16px !important; padding: 0 4px !important;">−</button>
+            </div>
+            <div id="gemini-quota-body">
+                <div style="display: flex !important; justify-content: space-between !important; margin-bottom: 8px !important; align-items: center !important;">
+                    <span id="gemini-quota-stats" style="font-weight: 600 !important; font-family: monospace !important;">0/0</span>
+                </div>
+                <div style="width: 100% !important; background: rgba(255,255,255,0.1) !important; height: 6px !important; border-radius: 3px !important; overflow: hidden !important; display: block !important;">
+                    <div id="gemini-quota-bar" style="width: 0% !important; background: #81c995 !important; height: 100% !important; transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1) !important;"></div>
+                </div>
+                <div style="margin-top: 6px !important; font-size: 10px !important; opacity: 0.5 !important; text-align: right !important;">
+                    UTC 00:00 重置
+                </div>
+            </div>
         `;
         
         document.body.appendChild(container);
+
+        // Drag functionality
+        let isDragging = false;
+        let offsetX, offsetY;
+        container.addEventListener('mousedown', (e) => {
+            if (e.target.id === 'gemini-quota-collapse') return;
+            isDragging = true;
+            offsetX = e.clientX - container.offsetLeft;
+            offsetY = e.clientY - container.offsetTop;
+        });
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            container.style.left = (e.clientX - offsetX) + 'px';
+            container.style.top = (e.clientY - offsetY) + 'px';
+            container.style.bottom = 'auto';
+        });
+        document.addEventListener('mouseup', () => isDragging = false);
+
+        // Collapse functionality
+        const collapseBtn = document.getElementById('gemini-quota-collapse');
+        const body = document.getElementById('gemini-quota-body');
+        collapseBtn.addEventListener('click', () => {
+            if (body.style.display === 'none') {
+                body.style.display = 'block';
+                collapseBtn.textContent = '−';
+            } else {
+                body.style.display = 'none';
+                collapseBtn.textContent = '+';
+            }
+        });
+
         updateUI(getStats());
     }
 
     function updateUI(stats) {
-        const container = document.getElementById("gemini-quota-monitor-ui");
-        if (!container) return;
+        const statsEl = document.getElementById("gemini-quota-stats");
+        const barEl = document.getElementById("gemini-quota-bar");
+        if (!statsEl || !barEl) return;
 
         const percent = Math.min((stats.count / DAILY_LIMIT) * 100, 100).toFixed(1);
         const barColor = percent > 85 ? '#f28b82' : (percent > 50 ? '#fdd663' : '#81c995');
         
-        container.innerHTML = `
-            <div style="display: flex !important; justify-content: space-between !important; margin-bottom: 8px !important; align-items: center !important;">
-                <span style="opacity: 0.8 !important; font-size: 12px !important;">Gemini 额度</span>
-                <span style="font-weight: 600 !important; font-family: monospace !important;">${stats.count}/${DAILY_LIMIT}</span>
-            </div>
-            <div style="width: 100% !important; background: rgba(255,255,255,0.1) !important; height: 6px !important; border-radius: 3px !important; overflow: hidden !important; display: block !important;">
-                <div style="width: ${percent}% !important; background: ${barColor} !important; height: 100% !important; transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1) !important;"></div>
-            </div>
-            <div style="margin-top: 6px !important; font-size: 10px !important; opacity: 0.5 !important; text-align: right !important;">
-                UTC 00:00 重置
-            </div>
-        `;
+        statsEl.textContent = `${stats.count}/${DAILY_LIMIT}`;
+        barEl.style.width = `${percent}%`;
+        barEl.style.background = barColor;
     }
 
     // --- 监听逻辑 ---
