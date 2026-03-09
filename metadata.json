@@ -1,5 +1,5 @@
 {
-  "name": "Gemini Quota Monitor v1.6.2",
+  "name": "Gemini Quota Monitor v1.7.0",
   "description": "A Tampermonkey user script designed to track and display the usage of Gemini's free tier quota across different Google domains (AI Studio and Gemini Web).",
   "requestFramePermissions": []
 }

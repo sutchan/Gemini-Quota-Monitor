@@ -8,7 +8,7 @@ A Tampermonkey user script designed to track and display the usage of Gemini's f
 - **Cross-Site Tracking**: Monitors requests on both `aistudio.google.com` and `gemini.google.com`.
 - **Real-time Synchronization**: Synchronizes usage data across multiple open browser tabs/windows.
 - **Automatic Reset**: Automatically resets the usage counter at UTC 00:00 daily.
-- **Non-Intrusive UI**: A floating, semi-transparent, and high-priority UI element.
+- **Interactive UI**: Floating, high-priority UI with drag-to-move and collapse functionality.
 
 ## Installation
 1. Install the [Tampermonkey](https://www.tampermonkey.net/) browser extension.

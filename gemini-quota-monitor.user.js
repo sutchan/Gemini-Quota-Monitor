@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gemini Quota Monitor
 // @namespace    http://tampermonkey.net/gemini.quota.monitor
-// @version      1.6.2
+// @version      1.7.0
 // @description  跨站（AI Studio & Gemini Web）实时监控免费额度，每日 UTC 00:00 自动重置
 // @author       Sut
 // @match        *://aistudio.google.com/*
@@ -18,8 +18,12 @@
     'use strict';
 
     // --- 用户配置区 ---
-    const DAILY_LIMIT = 1500; 
     const STORAGE_KEY = "Gemini_Universal_Usage_Stats";
+    const SETTINGS_KEY = "Gemini_Monitor_Settings";
+
+    function getSettings() {
+        return GM_getValue(SETTINGS_KEY, { dailyLimit: 1500, debugMode: false });
+    }
 
     // 获取 UTC 日期字符串 (YYYY-MM-DD)
     function getUTCTodayStr() {
@@ -40,14 +44,9 @@
 
     // --- UI 渲染引擎 ---
     function injectUI() {
-        console.log("Gemini Quota Monitor: Attempting to inject UI...");
-        if (document.getElementById("gemini-quota-monitor-ui")) {
-            console.log("Gemini Quota Monitor: UI already exists.");
-            return;
-        }
+        if (document.getElementById("gemini-quota-monitor-ui")) return;
         
         if (!document.body) {
-            console.log("Gemini Quota Monitor: Body not ready, waiting...");
             setTimeout(injectUI, 500);
             return;
         }
@@ -76,7 +75,7 @@
             user-select: none !important;
         `;
         
-        // Create container structure
+        // Header
         const header = document.createElement('div');
         header.id = "gemini-quota-header";
         header.style.cssText = `display: flex !important; justify-content: space-between !important; align-items: center !important; margin-bottom: 8px !important;`;
@@ -85,15 +84,25 @@
         title.textContent = "Gemini 额度";
         title.style.cssText = `opacity: 0.8 !important; font-size: 12px !important; pointer-events: none;`;
         
+        const btnWrapper = document.createElement('div');
+        
+        const settingsBtn = document.createElement('button');
+        settingsBtn.textContent = "⚙️";
+        settingsBtn.style.cssText = `background: none !important; border: none !important; color: white !important; cursor: pointer !important; font-size: 12px !important; padding: 0 4px !important;`;
+        settingsBtn.onclick = toggleSettings;
+        
         const collapseBtn = document.createElement('button');
         collapseBtn.id = "gemini-quota-collapse";
         collapseBtn.textContent = "−";
         collapseBtn.style.cssText = `background: none !important; border: none !important; color: white !important; cursor: pointer !important; font-size: 16px !important; padding: 0 4px !important;`;
         
+        btnWrapper.appendChild(settingsBtn);
+        btnWrapper.appendChild(collapseBtn);
         header.appendChild(title);
-        header.appendChild(collapseBtn);
+        header.appendChild(btnWrapper);
         container.appendChild(header);
 
+        // Body
         const body = document.createElement('div');
         body.id = "gemini-quota-body";
         
@@ -125,14 +134,49 @@
         
         container.appendChild(body);
         
+        // Settings Panel
+        const settingsPanel = document.createElement('div');
+        settingsPanel.id = "gemini-quota-settings";
+        settingsPanel.style.cssText = `display: none !important; margin-top: 10px !important; border-top: 1px solid rgba(255,255,255,0.1) !important; padding-top: 10px !important;`;
+        
+        const limitInput = document.createElement('input');
+        limitInput.type = "number";
+        limitInput.value = getSettings().dailyLimit;
+        limitInput.style.cssText = `width: 60px !important; background: #333 !important; color: white !important; border: none !important; padding: 2px !important; border-radius: 4px !important;`;
+        
+        const debugToggle = document.createElement('input');
+        debugToggle.type = "checkbox";
+        debugToggle.checked = getSettings().debugMode;
+        
+        settingsPanel.innerHTML = `
+            <div style="font-size: 11px !important; margin-bottom: 5px !important;">限额: </div>
+            <div style="margin-bottom: 5px !important;"></div>
+            <div style="font-size: 11px !important;">调试: </div>
+        `;
+        settingsPanel.firstChild.nextSibling.appendChild(limitInput);
+        settingsPanel.lastChild.appendChild(debugToggle);
+        
+        limitInput.onchange = (e) => {
+            let s = getSettings();
+            s.dailyLimit = parseInt(e.target.value);
+            GM_setValue(SETTINGS_KEY, s);
+            updateUI(getStats());
+        };
+        debugToggle.onchange = (e) => {
+            let s = getSettings();
+            s.debugMode = e.target.checked;
+            GM_setValue(SETTINGS_KEY, s);
+        };
+        
+        container.appendChild(settingsPanel);
+        
         document.body.appendChild(container);
-        console.log("Gemini Quota Monitor: UI appended to body.");
 
         // Drag functionality
         let isDragging = false;
         let offsetX, offsetY;
         container.addEventListener('mousedown', (e) => {
-            if (e.target.id === 'gemini-quota-collapse') return;
+            if (e.target.id === 'gemini-quota-collapse' || e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT') return;
             isDragging = true;
             offsetX = e.clientX - container.offsetLeft;
             offsetY = e.clientY - container.offsetTop;
@@ -146,8 +190,6 @@
         document.addEventListener('mouseup', () => isDragging = false);
 
         // Collapse functionality
-        const collapseBtn = document.getElementById('gemini-quota-collapse');
-        const body = document.getElementById('gemini-quota-body');
         collapseBtn.addEventListener('click', () => {
             if (body.style.display === 'none') {
                 body.style.display = 'block';
@@ -161,7 +203,6 @@
         // Watch for removal
         const observer = new MutationObserver((mutations) => {
             if (!document.getElementById("gemini-quota-monitor-ui")) {
-                console.log("Gemini Quota Monitor: UI removed, re-injecting...");
                 injectUI();
             }
         });
@@ -170,37 +211,40 @@
         updateUI(getStats());
     }
 
+    function toggleSettings() {
+        const panel = document.getElementById("gemini-quota-settings");
+        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+    }
+
     function updateUI(stats) {
         const statsEl = document.getElementById("gemini-quota-stats");
         const barEl = document.getElementById("gemini-quota-bar");
         if (!statsEl || !barEl) return;
 
-        const percent = Math.min((stats.count / DAILY_LIMIT) * 100, 100).toFixed(1);
+        const limit = getSettings().dailyLimit;
+        const percent = Math.min((stats.count / limit) * 100, 100).toFixed(1);
         const barColor = percent > 85 ? '#f28b82' : (percent > 50 ? '#fdd663' : '#81c995');
         
-        statsEl.textContent = `${stats.count}/${DAILY_LIMIT}`;
+        statsEl.textContent = `${stats.count}/${limit}`;
         barEl.style.width = `${percent}%`;
         barEl.style.background = barColor;
     }
 
     // --- 监听逻辑 ---
-
-    // 跨标签页数据同步
     GM_addValueChangeListener(STORAGE_KEY, (name, old_val, new_val, remote) => {
         if (new_val) updateUI(new_val);
     });
 
-    // 拦截请求
     const originFetch = window.fetch;
     window.fetch = async (...args) => {
         const url = args[0]?.toString() || "";
         const response = await originFetch(...args);
 
-        // 覆盖 AI Studio 和 Gemini Web 的关键接口
         const isAIStep = url.includes('runStreamingGenerateContent');
         const isWebStep = url.includes('SendMessage') || url.includes('generate_content');
 
         if ((isAIStep || isWebStep) && response.ok) {
+            if (getSettings().debugMode) console.log("Gemini Monitor: Request detected", url);
             let stats = getStats();
             stats.count += 1;
             GM_setValue(STORAGE_KEY, stats);
@@ -210,22 +254,18 @@
     };
 
     // --- 启动序列 ---
-    
-    // 立即尝试加载
     if (document.readyState === 'complete' || document.readyState === 'interactive') {
         injectUI();
     } else {
         window.addEventListener('DOMContentLoaded', injectUI);
     }
 
-    // 针对 Google 这种 SPA 页面，每秒检查一次 UI 是否被页面切换给刷掉了
     setInterval(() => {
         if (!document.getElementById("gemini-quota-monitor-ui")) {
             injectUI();
         }
     }, 1000);
 
-    // 每 30 秒执行一次日期重置检查
     setInterval(() => updateUI(getStats()), 30000);
 
 })();
