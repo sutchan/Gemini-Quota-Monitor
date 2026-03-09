@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gemini Quota Monitor
 // @namespace    http://tampermonkey.net/gemini.quota.monitor
-// @version      1.6.1
+// @version      1.6.2
 // @description  跨站（AI Studio & Gemini Web）实时监控免费额度，每日 UTC 00:00 自动重置
 // @author       Sut
 // @match        *://aistudio.google.com/*
@@ -76,23 +76,54 @@
             user-select: none !important;
         `;
         
-        container.innerHTML = `
-            <div id="gemini-quota-header" style="display: flex !important; justify-content: space-between !important; align-items: center !important; margin-bottom: 8px !important;">
-                <span style="opacity: 0.8 !important; font-size: 12px !important; pointer-events: none;">Gemini 额度</span>
-                <button id="gemini-quota-collapse" style="background: none !important; border: none !important; color: white !important; cursor: pointer !important; font-size: 16px !important; padding: 0 4px !important;">−</button>
-            </div>
-            <div id="gemini-quota-body">
-                <div style="display: flex !important; justify-content: space-between !important; margin-bottom: 8px !important; align-items: center !important;">
-                    <span id="gemini-quota-stats" style="font-weight: 600 !important; font-family: monospace !important;">0/0</span>
-                </div>
-                <div style="width: 100% !important; background: rgba(255,255,255,0.1) !important; height: 6px !important; border-radius: 3px !important; overflow: hidden !important; display: block !important;">
-                    <div id="gemini-quota-bar" style="width: 0% !important; background: #81c995 !important; height: 100% !important; transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1) !important;"></div>
-                </div>
-                <div style="margin-top: 6px !important; font-size: 10px !important; opacity: 0.5 !important; text-align: right !important;">
-                    UTC 00:00 重置
-                </div>
-            </div>
-        `;
+        // Create container structure
+        const header = document.createElement('div');
+        header.id = "gemini-quota-header";
+        header.style.cssText = `display: flex !important; justify-content: space-between !important; align-items: center !important; margin-bottom: 8px !important;`;
+        
+        const title = document.createElement('span');
+        title.textContent = "Gemini 额度";
+        title.style.cssText = `opacity: 0.8 !important; font-size: 12px !important; pointer-events: none;`;
+        
+        const collapseBtn = document.createElement('button');
+        collapseBtn.id = "gemini-quota-collapse";
+        collapseBtn.textContent = "−";
+        collapseBtn.style.cssText = `background: none !important; border: none !important; color: white !important; cursor: pointer !important; font-size: 16px !important; padding: 0 4px !important;`;
+        
+        header.appendChild(title);
+        header.appendChild(collapseBtn);
+        container.appendChild(header);
+
+        const body = document.createElement('div');
+        body.id = "gemini-quota-body";
+        
+        const statsWrapper = document.createElement('div');
+        statsWrapper.style.cssText = `display: flex !important; justify-content: space-between !important; margin-bottom: 8px !important; align-items: center !important;`;
+        
+        const stats = document.createElement('span');
+        stats.id = "gemini-quota-stats";
+        stats.style.cssText = `font-weight: 600 !important; font-family: monospace !important;`;
+        stats.textContent = "0/0";
+        
+        statsWrapper.appendChild(stats);
+        body.appendChild(statsWrapper);
+
+        const barWrapper = document.createElement('div');
+        barWrapper.style.cssText = `width: 100% !important; background: rgba(255,255,255,0.1) !important; height: 6px !important; border-radius: 3px !important; overflow: hidden !important; display: block !important;`;
+        
+        const bar = document.createElement('div');
+        bar.id = "gemini-quota-bar";
+        bar.style.cssText = `width: 0% !important; background: #81c995 !important; height: 100% !important; transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1) !important;`;
+        
+        barWrapper.appendChild(bar);
+        body.appendChild(barWrapper);
+
+        const footer = document.createElement('div');
+        footer.style.cssText = `margin-top: 6px !important; font-size: 10px !important; opacity: 0.5 !important; text-align: right !important;`;
+        footer.textContent = "UTC 00:00 重置";
+        body.appendChild(footer);
+        
+        container.appendChild(body);
         
         document.body.appendChild(container);
         console.log("Gemini Quota Monitor: UI appended to body.");
