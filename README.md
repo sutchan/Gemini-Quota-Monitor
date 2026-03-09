@@ -1,20 +1,17 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Gemini Quota Monitor
 
-# Run and deploy your AI Studio app
+A Tampermonkey user script designed to track and display the usage of Gemini's free tier quota across different Google domains (AI Studio and Gemini Web).
 
-This contains everything you need to run your app locally.
+[简体中文](README_CN.md)
 
-View your app in AI Studio: https://ai.studio/apps/c3d2fe80-148e-4147-8820-8dd302241c95
+## Features
+- **Cross-Site Tracking**: Monitors requests on both `aistudio.google.com` and `gemini.google.com`.
+- **Real-time Synchronization**: Synchronizes usage data across multiple open browser tabs/windows.
+- **Automatic Reset**: Automatically resets the usage counter at UTC 00:00 daily.
+- **Non-Intrusive UI**: A floating, semi-transparent, and high-priority UI element.
 
-## Run Locally
-
-**Prerequisites:**  Node.js
-
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## Installation
+1. Install the [Tampermonkey](https://www.tampermonkey.net/) browser extension.
+2. Create a new script in Tampermonkey.
+3. Copy and paste the code from `gemini-quota-monitor.user.js`.
+4. Save and visit `aistudio.google.com` or `gemini.google.com`.
