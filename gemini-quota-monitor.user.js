@@ -40,10 +40,15 @@
 
     // --- UI 渲染引擎 ---
     function injectUI() {
-        if (document.getElementById("gemini-quota-monitor-ui")) return;
+        console.log("Gemini Quota Monitor: Attempting to inject UI...");
+        if (document.getElementById("gemini-quota-monitor-ui")) {
+            console.log("Gemini Quota Monitor: UI already exists.");
+            return;
+        }
         
         if (!document.body) {
-            setTimeout(injectUI, 200);
+            console.log("Gemini Quota Monitor: Body not ready, waiting...");
+            setTimeout(injectUI, 500);
             return;
         }
 
@@ -90,6 +95,7 @@
         `;
         
         document.body.appendChild(container);
+        console.log("Gemini Quota Monitor: UI appended to body.");
 
         // Drag functionality
         let isDragging = false;
@@ -120,6 +126,15 @@
                 collapseBtn.textContent = '+';
             }
         });
+
+        // Watch for removal
+        const observer = new MutationObserver((mutations) => {
+            if (!document.getElementById("gemini-quota-monitor-ui")) {
+                console.log("Gemini Quota Monitor: UI removed, re-injecting...");
+                injectUI();
+            }
+        });
+        observer.observe(document.body, { childList: true });
 
         updateUI(getStats());
     }
