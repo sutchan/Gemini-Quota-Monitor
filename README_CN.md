@@ -12,6 +12,5 @@ Gemini Quota Monitor 是一款 Tampermonkey 用户脚本，旨在跟踪并显示
 
 ## 安装方法
 1. 安装 [Tampermonkey](https://www.tampermonkey.net/) 浏览器扩展。
-2. 在 Tampermonkey 中新建脚本。
-3. 复制并粘贴 `gemini-quota-monitor.user.js` 中的代码。
-4. 保存并访问 `aistudio.google.com` 或 `gemini.google.com`。
+2. 点击下方链接直接安装脚本：
+   [**一键安装 Gemini Quota Monitor**](https://github.com/sutchan/Gemini-Quota-Monitor/raw/refs/heads/main/gemini-quota-monitor.user.js)
