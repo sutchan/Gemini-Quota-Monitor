@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name         Gemini Quota Monitor
 // @namespace    http://tampermonkey.net/gemini.quota.monitor
-// @version      1.6
+// @version      1.6.1
 // @description  跨站（AI Studio & Gemini Web）实时监控免费额度，每日 UTC 00:00 自动重置
 // @author       Sut
-// @match        https://aistudio.google.com/*
-// @match        https://gemini.google.com/*
+// @match        *://aistudio.google.com/*
+// @match        *://gemini.google.com/*
 // @updateURL    https://github.com/sutchan/Gemini-Quota-Monitor/raw/refs/heads/main/gemini-quota-monitor.user.js
 // @downloadURL  https://github.com/sutchan/Gemini-Quota-Monitor/raw/refs/heads/main/gemini-quota-monitor.user.js
 // @grant        GM_setValue
