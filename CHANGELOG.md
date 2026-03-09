@@ -1,10 +1,9 @@
 # Changelog
 
-## v1.8.1
-- Added rate limits for Gemini 3 and 3.1 series models.
+## v1.8.3
+- Updated version number.
 
-## v1.8.0
-- Added model selection in settings panel.
-- Added daily limits for latest Gemini models.
+## v1.8.2
+- Corrected rate limits for Gemini 3 Pro/Flash and Gemini 3.1 Pro/Flash Lite models.
 - Improved UI injection robustness with MutationObserver.
 - Added detailed logging for debugging.

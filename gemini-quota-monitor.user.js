@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gemini Quota Monitor
 // @namespace    http://tampermonkey.net/gemini.quota.monitor
-// @version      1.8.1
+// @version      1.8.3
 // @description  跨站（AI Studio & Gemini Web）实时监控免费额度，每日 UTC 00:00 自动重置
 // @author       Sut
 // @match        *://aistudio.google.com/*
@@ -27,9 +27,9 @@
         "gemini-2.0-flash-lite": 1500,
         "gemini-2.0-pro-exp": 50,
         "gemini-3-pro": 50,
-        "gemini-3-flash-lite": 1500,
+        "gemini-3-flash": 1500,
         "gemini-3.1-pro": 50,
-        "gemini-3.1-flash": 1500
+        "gemini-3.1-flash-lite": 1500
     };
 
     function getSettings() {
