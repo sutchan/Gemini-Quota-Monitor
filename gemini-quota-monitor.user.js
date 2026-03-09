@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gemini Quota Monitor
 // @namespace    http://tampermonkey.net/gemini.quota.monitor
-// @version      1.7.1
+// @version      1.8.0
 // @description  跨站（AI Studio & Gemini Web）实时监控免费额度，每日 UTC 00:00 自动重置
 // @author       Sut
 // @match        *://aistudio.google.com/*
@@ -20,9 +20,16 @@
     // --- 用户配置区 ---
     const STORAGE_KEY = "Gemini_Universal_Usage_Stats";
     const SETTINGS_KEY = "Gemini_Monitor_Settings";
+    const MODEL_LIMITS = {
+        "gemini-1.5-flash": 1500,
+        "gemini-1.5-pro": 50,
+        "gemini-2.0-flash": 1500,
+        "gemini-2.0-flash-lite": 1500,
+        "gemini-2.0-pro-exp": 50
+    };
 
     function getSettings() {
-        return GM_getValue(SETTINGS_KEY, { dailyLimit: 1500, debugMode: false });
+        return GM_getValue(SETTINGS_KEY, { selectedModel: "gemini-1.5-flash", dailyLimit: 1500, debugMode: false });
     }
 
     // 获取 UTC 日期字符串 (YYYY-MM-DD)
@@ -144,9 +151,27 @@
         limitInput.value = getSettings().dailyLimit;
         limitInput.style.cssText = `width: 60px !important; background: #333 !important; color: white !important; border: none !important; padding: 2px !important; border-radius: 4px !important;`;
         
+        const modelSelect = document.createElement('select');
+        modelSelect.style.cssText = `width: 100% !important; background: #333 !important; color: white !important; border: none !important; padding: 2px !important; border-radius: 4px !important; margin-bottom: 5px !important;`;
+        Object.keys(MODEL_LIMITS).forEach(model => {
+            const option = document.createElement('option');
+            option.value = model;
+            option.textContent = model;
+            if (model === getSettings().selectedModel) option.selected = true;
+            modelSelect.appendChild(option);
+        });
+        
         const debugToggle = document.createElement('input');
         debugToggle.type = "checkbox";
         debugToggle.checked = getSettings().debugMode;
+        
+        const modelLabel = document.createElement('div');
+        modelLabel.textContent = "模型: ";
+        modelLabel.style.cssText = `font-size: 11px !important; margin-bottom: 5px !important;`;
+        
+        const modelContainer = document.createElement('div');
+        modelContainer.style.cssText = `margin-bottom: 5px !important;`;
+        modelContainer.appendChild(modelSelect);
         
         const limitLabel = document.createElement('div');
         limitLabel.textContent = "限额: ";
@@ -163,11 +188,21 @@
         const debugContainer = document.createElement('div');
         debugContainer.appendChild(debugToggle);
         
+        settingsPanel.appendChild(modelLabel);
+        settingsPanel.appendChild(modelContainer);
         settingsPanel.appendChild(limitLabel);
         settingsPanel.appendChild(limitContainer);
         settingsPanel.appendChild(debugLabel);
         settingsPanel.appendChild(debugContainer);
         
+        modelSelect.onchange = (e) => {
+            let s = getSettings();
+            s.selectedModel = e.target.value;
+            s.dailyLimit = MODEL_LIMITS[e.target.value];
+            limitInput.value = s.dailyLimit;
+            GM_setValue(SETTINGS_KEY, s);
+            updateUI(getStats());
+        };
         limitInput.onchange = (e) => {
             let s = getSettings();
             s.dailyLimit = parseInt(e.target.value);
