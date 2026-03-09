@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gemini Quota Monitor
-// @namespace    http://tampermonkey.net/gemini.quota.master
-// @version      1.4
+// @namespace    http://tampermonkey.net/gemini.quota.monitor
+// @version      1.5
 // @description  跨站（AI Studio & Gemini Web）实时监控免费额度，每日 UTC 00:00 自动重置
 // @author       YourName
 // @match        https://aistudio.google.com/*
@@ -11,6 +11,7 @@
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_addValueChangeListener
+// @run-at       document-start
 // ==/UserScript==
 
 (function() {
@@ -19,8 +20,6 @@
     // --- 用户配置区 ---
     const DAILY_LIMIT = 1500; 
     const STORAGE_KEY = "Gemini_Universal_Usage_Stats";
-
-    // --- 核心逻辑 ---
 
     // 获取 UTC 日期字符串 (YYYY-MM-DD)
     function getUTCTodayStr() {
@@ -39,49 +38,81 @@
         return stats;
     }
 
-    // --- UI 构建 ---
-    const container = document.createElement('div');
-    container.id = "gemini-quota-monitor-ui";
-    container.style = `
-        position: fixed; bottom: 24px; left: 24px; z-index: 2147483647;
-        background: rgba(28, 29, 31, 0.85); color: #e8eaed;
-        padding: 12px 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
-        font-family: 'Google Sans', 'Segoe UI', Roboto, sans-serif; font-size: 13px;
-        width: 190px; box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-        backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-        pointer-events: none; transition: opacity 0.3s;
-    `;
-    document.body.appendChild(container);
+    // --- UI 渲染引擎 ---
+    function injectUI() {
+        // 如果已存在则不重复创建
+        if (document.getElementById("gemini-quota-monitor-ui")) return;
+        
+        // 确保 body 已加载
+        if (!document.body) {
+            setTimeout(injectUI, 200);
+            return;
+        }
+
+        const container = document.createElement('div');
+        container.id = "gemini-quota-monitor-ui";
+        
+        // 使用 cssText 强制注入最高优先级样式
+        container.style.cssText = `
+            position: fixed !important;
+            bottom: 30px !important;
+            left: 30px !important;
+            z-index: 2147483647 !important;
+            background: rgba(28, 29, 31, 0.9) !important;
+            color: #e8eaed !important;
+            padding: 12px 16px !important;
+            border-radius: 12px !important;
+            border: 1px solid rgba(255,255,255,0.2) !important;
+            font-family: 'Google Sans', Roboto, sans-serif !important;
+            font-size: 13px !important;
+            width: 190px !important;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important;
+            backdrop-filter: blur(10px) !important;
+            -webkit-backdrop-filter: blur(10px) !important;
+            pointer-events: none !important;
+            display: block !important;
+            line-height: 1.4 !important;
+        `;
+        
+        document.body.appendChild(container);
+        updateUI(getStats());
+    }
 
     function updateUI(stats) {
+        const container = document.getElementById("gemini-quota-monitor-ui");
+        if (!container) return;
+
         const percent = Math.min((stats.count / DAILY_LIMIT) * 100, 100).toFixed(1);
         const barColor = percent > 85 ? '#f28b82' : (percent > 50 ? '#fdd663' : '#81c995');
         
         container.innerHTML = `
-            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 500;">
-                <span style="opacity: 0.8;">Gemini 额度</span>
-                <span>${stats.count} / ${DAILY_LIMIT}</span>
+            <div style="display: flex !important; justify-content: space-between !important; margin-bottom: 8px !important; align-items: center !important;">
+                <span style="opacity: 0.8 !important; font-size: 12px !important;">Gemini 额度</span>
+                <span style="font-weight: 600 !important; font-family: monospace !important;">${stats.count}/${DAILY_LIMIT}</span>
             </div>
-            <div style="width: 100%; background: rgba(255,255,255,0.1); height: 5px; border-radius: 3px; overflow: hidden;">
-                <div style="width: ${percent}%; background: ${barColor}; height: 100%; transition: width 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);"></div>
+            <div style="width: 100% !important; background: rgba(255,255,255,0.1) !important; height: 6px !important; border-radius: 3px !important; overflow: hidden !important; display: block !important;">
+                <div style="width: ${percent}% !important; background: ${barColor} !important; height: 100% !important; transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1) !important;"></div>
             </div>
-            <div style="margin-top: 6px; font-size: 10px; opacity: 0.5; text-align: right;">
+            <div style="margin-top: 6px !important; font-size: 10px !important; opacity: 0.5 !important; text-align: right !important;">
                 UTC 00:00 重置
             </div>
         `;
     }
 
-    // --- 数据同步与拦截 ---
+    // --- 监听逻辑 ---
 
+    // 跨标签页数据同步
     GM_addValueChangeListener(STORAGE_KEY, (name, old_val, new_val, remote) => {
         if (new_val) updateUI(new_val);
     });
 
+    // 拦截请求
     const originFetch = window.fetch;
     window.fetch = async (...args) => {
         const url = args[0]?.toString() || "";
         const response = await originFetch(...args);
 
+        // 覆盖 AI Studio 和 Gemini Web 的关键接口
         const isAIStep = url.includes('runStreamingGenerateContent');
         const isWebStep = url.includes('SendMessage') || url.includes('generate_content');
 
@@ -94,7 +125,23 @@
         return response;
     };
 
-    updateUI(getStats());
+    // --- 启动序列 ---
+    
+    // 立即尝试加载
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        injectUI();
+    } else {
+        window.addEventListener('DOMContentLoaded', injectUI);
+    }
+
+    // 针对 Google 这种 SPA 页面，每秒检查一次 UI 是否被页面切换给刷掉了
+    setInterval(() => {
+        if (!document.getElementById("gemini-quota-monitor-ui")) {
+            injectUI();
+        }
+    }, 1000);
+
+    // 每 30 秒执行一次日期重置检查
     setInterval(() => updateUI(getStats()), 30000);
 
 })();
