@@ -148,13 +148,25 @@
         debugToggle.type = "checkbox";
         debugToggle.checked = getSettings().debugMode;
         
-        settingsPanel.innerHTML = `
-            <div style="font-size: 11px !important; margin-bottom: 5px !important;">限额: </div>
-            <div style="margin-bottom: 5px !important;"></div>
-            <div style="font-size: 11px !important;">调试: </div>
-        `;
-        settingsPanel.firstChild.nextSibling.appendChild(limitInput);
-        settingsPanel.lastChild.appendChild(debugToggle);
+        const limitLabel = document.createElement('div');
+        limitLabel.textContent = "限额: ";
+        limitLabel.style.cssText = `font-size: 11px !important; margin-bottom: 5px !important;`;
+        
+        const limitContainer = document.createElement('div');
+        limitContainer.style.cssText = `margin-bottom: 5px !important;`;
+        limitContainer.appendChild(limitInput);
+        
+        const debugLabel = document.createElement('div');
+        debugLabel.textContent = "调试: ";
+        debugLabel.style.cssText = `font-size: 11px !important;`;
+        
+        const debugContainer = document.createElement('div');
+        debugContainer.appendChild(debugToggle);
+        
+        settingsPanel.appendChild(limitLabel);
+        settingsPanel.appendChild(limitContainer);
+        settingsPanel.appendChild(debugLabel);
+        settingsPanel.appendChild(debugContainer);
         
         limitInput.onchange = (e) => {
             let s = getSettings();
