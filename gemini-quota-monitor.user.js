@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gemini Quota Monitor
 // @namespace    http://tampermonkey.net/gemini.quota.monitor
-// @version      1.8.3
+// @version      1.8.4
 // @description  跨站（AI Studio & Gemini Web）实时监控免费额度，每日 UTC 00:00 自动重置
 // @author       Sut
 // @match        *://aistudio.google.com/*
@@ -16,6 +16,12 @@
 
 (function() {
     'use strict';
+
+    const TRANSLATIONS = {
+        en: { title: "Gemini Quota", reset: "UTC 00:00 reset", limit: "Limit:", model: "Model:", debug: "Debug:" },
+        zh: { title: "Gemini 额度", reset: "UTC 00:00 重置", limit: "限额: ", model: "模型: ", debug: "调试: " }
+    };
+    const i18n = TRANSLATIONS[navigator.language.startsWith('zh') ? 'zh' : 'en'];
 
     // --- 用户配置区 ---
     const STORAGE_KEY = "Gemini_Universal_Usage_Stats";
@@ -170,7 +176,7 @@
         debugToggle.checked = getSettings().debugMode;
         
         const modelLabel = document.createElement('div');
-        modelLabel.textContent = "模型: ";
+        modelLabel.textContent = i18n.model;
         modelLabel.style.cssText = `font-size: 11px !important; margin-bottom: 5px !important;`;
         
         const modelContainer = document.createElement('div');
@@ -178,7 +184,7 @@
         modelContainer.appendChild(modelSelect);
         
         const limitLabel = document.createElement('div');
-        limitLabel.textContent = "限额: ";
+        limitLabel.textContent = i18n.limit;
         limitLabel.style.cssText = `font-size: 11px !important; margin-bottom: 5px !important;`;
         
         const limitContainer = document.createElement('div');
@@ -186,7 +192,7 @@
         limitContainer.appendChild(limitInput);
         
         const debugLabel = document.createElement('div');
-        debugLabel.textContent = "调试: ";
+        debugLabel.textContent = i18n.debug;
         debugLabel.style.cssText = `font-size: 11px !important;`;
         
         const debugContainer = document.createElement('div');
@@ -229,8 +235,9 @@
         container.addEventListener('mousedown', (e) => {
             if (e.target.id === 'gemini-quota-collapse' || e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT') return;
             isDragging = true;
-            offsetX = e.clientX - container.offsetLeft;
-            offsetY = e.clientY - container.offsetTop;
+            const rect = container.getBoundingClientRect();
+            offsetX = e.clientX - rect.left;
+            offsetY = e.clientY - rect.top;
         });
         document.addEventListener('mousemove', (e) => {
             if (!isDragging) return;

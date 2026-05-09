@@ -11,6 +11,7 @@ Gemini Quota Monitor 是一款 Tampermonkey 用户脚本，旨在跟踪并显示
 - **实时同步**：使用 `GM_addValueChangeListener` 在多个打开的浏览器标签页/窗口之间同步使用数据。
 - **自动重置**：每日 UTC 00:00 自动重置使用计数器。
 - **交互式 UI**：浮动、高优先级的 UI，支持拖拽移动和折叠功能。
+- **国际化支持**：自动检测浏览器语言，支持英文和中文界面。
 
 ## 4. 技术实现
 - **平台**：Tampermonkey (Userscript)。

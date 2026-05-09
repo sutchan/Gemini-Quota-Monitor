@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.8.4
+- Added i18n support (English/Chinese) for UI text.
+- Fixed drag positioning using getBoundingClientRect().
+- Synced package.json version to 1.8.3.
+
 ## v1.8.3
 - Updated version number.
 
