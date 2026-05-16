@@ -12,6 +12,8 @@ Gemini Quota Monitor 是一款 Tampermonkey 用户脚本，旨在跟踪并显示
 - **自动重置**：每日 UTC 00:00 自动重置使用计数器。
 - **交互式 UI**：浮动、高优先级的 UI，支持拖拽移动和折叠功能。
 - **国际化支持**：自动检测浏览器语言，支持英文和中文界面。
+- **多模型配置**：内置多个 Gemini 模型的日限配置，支持用户自定义。
+- **调试模式**：提供调试日志功能。
 
 ## 4. 技术实现
 - **平台**：Tampermonkey (Userscript)。
@@ -21,9 +23,32 @@ Gemini Quota Monitor 是一款 Tampermonkey 用户脚本，旨在跟踪并显示
 - **健壮性**：支持拖拽移动和折叠功能，增强用户体验。
 
 ## 5. 配置
-- **DAILY_LIMIT**：可配置的每日额度限制（默认：1500）。
-- **STORAGE_KEY**：用于 `GM_` 存储的键。
+- **MODEL_LIMITS**：内置模型日限配置。
+- **STORAGE_KEY**：用于 `GM_` 存储使用统计的键。
+- **SETTINGS_KEY**：用于 `GM_` 存储用户设置的键。
 
 ## 6. 使用方法
 1. 安装 Tampermonkey 浏览器扩展。
 2. 点击 README 中的一键安装链接即可安装。
+
+## 7. 文件结构
+```
+/workspace/
+├── README.md              # 中文主文档
+├── README_EN.md           # 英文文档
+├── openspec/
+│   └── gemini-quota-monitor.md  # 规范文档
+├── CHANGELOG.md           # 变更日志
+├── metadata.json          # 元数据
+├── package.json           # 项目配置
+├── tsconfig.json          # TypeScript 配置
+├── vite.config.ts         # Vite 配置
+└── gemini-quota-monitor.user.js  # 主脚本
+```
+
+## 8. 代码质量标准
+- 所有代码文件第一行必须包含文件路径和版本号注释
+- 遵循 JavaScript 最佳实践
+- 保持代码风格一致
+- 添加适当的注释
+- 支持国际化

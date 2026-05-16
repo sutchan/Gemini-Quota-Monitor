@@ -1,7 +1,8 @@
+// gemini-quota-monitor.user.js v1.8.5
 // ==UserScript==
 // @name         Gemini Quota Monitor
 // @namespace    http://tampermonkey.net/gemini.quota.monitor
-// @version      1.8.4
+// @version      1.8.5
 // @description  跨站（AI Studio & Gemini Web）实时监控免费额度，每日 UTC 00:00 自动重置
 // @author       Sut
 // @match        *://aistudio.google.com/*
@@ -98,7 +99,7 @@
         header.style.cssText = `display: flex !important; justify-content: space-between !important; align-items: center !important; margin-bottom: 8px !important;`;
         
         const title = document.createElement('span');
-        title.textContent = "Gemini 额度";
+        title.textContent = i18n.title;
         title.style.cssText = `opacity: 0.8 !important; font-size: 12px !important; pointer-events: none;`;
         
         const btnWrapper = document.createElement('div');
@@ -146,7 +147,7 @@
 
         const footer = document.createElement('div');
         footer.style.cssText = `margin-top: 6px !important; font-size: 10px !important; opacity: 0.5 !important; text-align: right !important;`;
-        footer.textContent = "UTC 00:00 重置";
+        footer.textContent = i18n.reset;
         body.appendChild(footer);
         
         container.appendChild(body);

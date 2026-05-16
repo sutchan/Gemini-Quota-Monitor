@@ -1,7 +1,7 @@
 {
-  "name": "gemini-quota-monitor-v1.8.4",
+  "name": "gemini-quota-monitor-v1.8.5",
   "private": true,
-  "version": "1.8.4",
+  "version": "1.8.5",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,11 +9,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
-
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
-    
     "typescript": "~5.8.2",
     "vite": "^6.2.0"
   }

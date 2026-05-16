@@ -1,16 +1,17 @@
 # Gemini Quota Monitor
 
-A Tampermonkey user script designed to track and display the usage of Gemini's free tier quota across different Google domains (AI Studio and Gemini Web).
+Gemini Quota Monitor 是一款 Tampermonkey 用户脚本，旨在跟踪并显示 Gemini 免费层级额度在不同 Google 域名（AI Studio 和 Gemini Web）上的使用情况。
 
-[简体中文](README_CN.md)
+[English Version](README_EN.md)
 
-## Features
-- **Cross-Site Tracking**: Monitors requests on both `aistudio.google.com` and `gemini.google.com`.
-- **Real-time Synchronization**: Synchronizes usage data across multiple open browser tabs/windows.
-- **Automatic Reset**: Automatically resets the usage counter at UTC 00:00 daily.
-- **Interactive UI**: Floating, high-priority UI with drag-to-move and collapse functionality.
+## 功能特性
+- **跨站跟踪**：监控 `aistudio.google.com` 和 `gemini.google.com` 上的请求。
+- **实时同步**：在多个打开的浏览器标签页/窗口之间同步使用数据。
+- **自动重置**：每日 UTC 00:00 自动重置使用计数器。
+- **交互式 UI**：浮动、高优先级的 UI，支持拖拽移动和折叠功能。
+- **国际化 (i18n)**：自动检测浏览器语言，支持英文和中文界面。
 
-## Installation
-1. Install the [Tampermonkey](https://www.tampermonkey.net/) browser extension.
-2. Click the link below to install the script directly:
-   [**Install Gemini Quota Monitor**](https://github.com/sutchan/Gemini-Quota-Monitor/raw/refs/heads/main/gemini-quota-monitor.user.js)
+## 安装方法
+1. 安装 [Tampermonkey](https://www.tampermonkey.net/) 浏览器扩展。
+2. 点击下方链接直接安装脚本：
+   [**一键安装 Gemini Quota Monitor**](https://github.com/sutchan/Gemini-Quota-Monitor/raw/refs/heads/main/gemini-quota-monitor.user.js)
