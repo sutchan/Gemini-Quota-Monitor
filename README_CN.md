@@ -10,7 +10,12 @@ Gemini Quota Monitor 是一款 Tampermonkey 用户脚本，旨在跟踪并显示
 - **自动重置**：每日 UTC 00:00 自动重置使用计数器。
 - **交互式 UI**：浮动、高优先级的 UI，支持拖拽移动和折叠功能。
 
-## 安装方法
+## 安装与调试
 1. 安装 [Tampermonkey](https://www.tampermonkey.net/) 浏览器扩展。
 2. 点击下方链接直接安装脚本：
    [**一键安装 Gemini Quota Monitor**](https://github.com/sutchan/Gemini-Quota-Monitor/raw/refs/heads/main/gemini-quota-monitor.user.js)
+
+### 若无法正常监测：
+- 请开启设置面板中的“调试模式”。
+- 打开浏览器开发者工具 (F12) 的 "Console" (控制台) 标签页，观察是否存在 "Potential request ignored" 的输出。
+- 这可以帮助您定位新的 API 接口路径，您可据此调整脚本的匹配逻辑。

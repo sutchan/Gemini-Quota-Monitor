@@ -291,7 +291,7 @@
         const url = args[0]?.toString() || "";
         const response = await originFetch(...args);
 
-        const isAIStep = url.includes('runStreamingGenerateContent');
+        const isAIStep = url.includes('GenerateContent');
         const isWebStep = url.includes('SendMessage') || url.includes('generate_content');
 
         if ((isAIStep || isWebStep) && response.ok) {
@@ -300,6 +300,8 @@
             stats.count += 1;
             GM_setValue(STORAGE_KEY, stats);
             updateUI(stats);
+        } else if (getSettings().debugMode && url.includes('gemini') || url.includes('aistudio')) {
+            console.log("Gemini Monitor: Potential request ignored", url);
         }
         return response;
     };
