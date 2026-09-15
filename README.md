@@ -10,7 +10,12 @@ A Tampermonkey user script designed to track and display the usage of Gemini's f
 - **Automatic Reset**: Automatically resets the usage counter at UTC 00:00 daily.
 - **Interactive UI**: Floating, high-priority UI with drag-to-move and collapse functionality.
 
-## Installation
+## Installation & Troubleshooting
 1. Install the [Tampermonkey](https://www.tampermonkey.net/) browser extension.
 2. Click the link below to install the script directly:
    [**Install Gemini Quota Monitor**](https://github.com/sutchan/Gemini-Quota-Monitor/raw/refs/heads/main/gemini-quota-monitor.user.js)
+
+### If tracking fails:
+- Enable "Debug Mode" in the script's settings panel.
+- Open your browser's Developer Tools (F12) and check the "Console" tab for "Potential request ignored" logs.
+- This will help identify the new API path, allowing you to adjust the matching logic in the script.

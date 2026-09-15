@@ -12,9 +12,23 @@ export default function Page() {
         <li>交互式 UI：浮动、高优先级的 UI，支持拖拽移动和折叠功能。</li>
       </ul>
 
+      <h2>入门指南 (Getting Started)</h2>
+      <ol>
+        <li><strong>安装扩展</strong>：确保您的浏览器已安装 <a href="https://www.tampermonkey.net/">Tampermonkey</a> 扩展。</li>
+        <li><strong>安装脚本</strong>：点击下方链接进行一键安装：<br/>
+           <a href="https://github.com/sutchan/Gemini-Quota-Monitor/raw/refs/heads/main/gemini-quota-monitor.user.js">点击安装 Gemini Quota Monitor</a>
+        </li>
+        <li><strong>验证安装</strong>：
+          <ul>
+            <li>访问 <a href="https://aistudio.google.com/">Google AI Studio</a> 或 <a href="https://gemini.google.com/">Gemini Web</a>。</li>
+            <li>页面右上角或特定位置应出现一个浮动的小窗口。</li>
+            <li>若未出现，请点击浏览器工具栏的 Tampermonkey 图标，确认脚本已启用。</li>
+          </ul>
+        </li>
+      </ol>
+
       <h2>安装与使用</h2>
-      <p>请安装 Tampermonkey 扩展后安装脚本。</p>
-      <a href="https://github.com/sutchan/Gemini-Quota-Monitor/raw/refs/heads/main/gemini-quota-monitor.user.js">点击安装脚本</a>
+      <p>安装完成后，脚本将在访问上述站点时自动生效。</p>
     </main>
   );
 }
