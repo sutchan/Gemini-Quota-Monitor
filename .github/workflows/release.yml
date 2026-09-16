@@ -1,0 +1,74 @@
+name: Release
+
+# 触发：推送 v* 标签（如 git tag v2.0.0 && git push origin v2.0.0）。
+# 动作：校验标签版本与脚本 @version / CHANGELOG 一致 → 打包用户脚本 → 创建 GitHub Release。
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  NODE_VERSION: '22'
+  SCRIPT_PATH: src/scripts/gemini-quota-monitor.user.js
+
+jobs:
+  release:
+    name: 校验并发布
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 配置 Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 校验脚本
+        run: |
+          node --check "$SCRIPT_PATH"
+          npm run validate:script
+
+      - name: 校验标签版本与脚本版本一致
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          SCRIPT_VERSION=$(grep -m1 -oE '//\s*@version\s+[0-9]+\.[0-9]+\.[0-9]+' "$SCRIPT_PATH" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+          CHANGELOG_VERSION=$(grep -m1 -oE '^##\s*v?[0-9]+\.[0-9]+\.[0-9]+' docs/CHANGELOG.md | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+          echo "tag=$TAG_VERSION script=$SCRIPT_VERSION changelog=$CHANGELOG_VERSION"
+          if [ "$TAG_VERSION" != "$SCRIPT_VERSION" ]; then
+            echo "::error::标签版本($TAG_VERSION)与脚本 @version($SCRIPT_VERSION)不一致，请先在脚本中更新版本号。"
+            exit 1
+          fi
+          if [ -n "$CHANGELOG_VERSION" ] && [ "$TAG_VERSION" != "$CHANGELOG_VERSION" ]; then
+            echo "::error::标签版本($TAG_VERSION)与 docs/CHANGELOG.md 最新版本($CHANGELOG_VERSION)不一致。"
+            exit 1
+          fi
+
+      - name: 生成发布说明
+        run: |
+          # 抽取 CHANGELOG 中当前版本段落作为发布说明
+          VERSION="${GITHUB_REF_NAME#v}"
+          awk -v v="$VERSION" '
+            $0 ~ "^## v?"v"$" { flag=1; next }
+            flag && /^## / { exit }
+            flag { print }
+          ' docs/CHANGELOG.md > release-notes.md
+          if [ ! -s release-notes.md ]; then
+            echo "发布 v${VERSION}" > release-notes.md
+          fi
+
+      - name: 创建 GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: v${{ github.ref_name }}
+          body_path: release-notes.md
+          files: ${{ env.SCRIPT_PATH }}
+          generate_release_notes: true

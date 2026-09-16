@@ -1,24 +1,82 @@
-name: CI Pipeline
+name: CI
 
+# 触发：PR 与 main 分支推送。
+# 目标：在合并前拦住两类故障 —— 用户脚本的元数据/合规问题（会直接影响所有在线用户），
+#       以及展示站的类型错误与构建失败。
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '22'
+  SCRIPT_PATH: src/scripts/gemini-quota-monitor.user.js
 
 jobs:
-  build:
+  # 核心交付物：Tampermonkey 用户脚本
+  script:
+    name: 用户脚本校验
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Setup Node
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 配置 Node
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
-          cache: 'npm'
-      - name: Install dependencies
-        run: npm install
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 语法检查
+        run: node --check "$SCRIPT_PATH"
+
+      - name: 元数据与合规校验
+        run: npm run validate:script
+
+      - name: 单元测试
+        run: npm test
+
+  # 展示站：Next.js 15 App Router
+  web:
+    name: 展示站构建
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 配置 Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 类型检查
+        run: npm run typecheck
+
       - name: Lint
-        run: npm run lint
-      - name: Build
+        # 项目尚未接入 ESLint 配置，缺少配置时 next lint 会进入交互式初始化而失败，
+        # 因此仅在存在配置文件时执行，避免 CI 误报。
+        run: |
+          if [ -f eslint.config.mjs ] || [ -f eslint.config.js ] || [ -f .eslintrc.json ] || [ -f .eslintrc.js ]; then
+            npm run lint
+          else
+            echo "::warning::未检测到 ESLint 配置，跳过 lint。建议执行 npx next lint 生成 eslint.config.mjs 后移除此条件分支。"
+          fi
+
+      - name: 构建
         run: npm run build

@@ -1,0 +1,66 @@
+name: CD
+
+# 触发：main 分支合并后部署展示站到 GitHub Pages。
+# 站点为纯静态（src/app/page.tsx 为客户端组件），因此使用 Next.js 静态导出。
+# 首次使用需在仓库 Settings → Pages → Source 选择 "GitHub Actions"。
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+env:
+  NODE_VERSION: '22'
+  SCRIPT_PATH: src/scripts/gemini-quota-monitor.user.js
+
+jobs:
+  deploy:
+    name: 构建并部署 Pages
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 配置 Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 静态导出构建
+        env:
+          NEXT_STATIC_EXPORT: 'true'
+        run: npm run build
+
+      - name: 附带用户脚本（提供稳定的分发地址）
+        run: |
+          mkdir -p out
+          cp "$SCRIPT_PATH" out/gemini-quota-monitor.user.js
+          # Pages 默认用 Jekyll 处理，会忽略下划线开头的目录
+          touch out/.nojekyll
+
+      - name: 配置 Pages
+        uses: actions/configure-pages@v5
+
+      - name: 上传产物
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: out
+
+      - name: 部署到 GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
