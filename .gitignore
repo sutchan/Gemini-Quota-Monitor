@@ -28,3 +28,6 @@ next-env.d.ts
 *.njsproj
 *.sln
 *.sw?
+
+# WorkBuddy 本地记忆与技能目录
+.workbuddy/
