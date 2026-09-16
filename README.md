@@ -13,7 +13,7 @@ A Tampermonkey user script designed to track and display the usage of Gemini's f
 ## Installation & Troubleshooting
 1. Install the [Tampermonkey](https://www.tampermonkey.net/) browser extension.
 2. Click the link below to install the script directly:
-   [**Install Gemini Quota Monitor**](https://github.com/sutchan/Gemini-Quota-Monitor/raw/refs/heads/main/gemini-quota-monitor.user.js)
+   [**Install Gemini Quota Monitor**](https://github.com/sutchan/Gemini-Quota-Monitor/raw/refs/heads/main/src/scripts/gemini-quota-monitor.user.js)
 
 ### If tracking fails:
 - Enable "Debug Mode" in the script's settings panel.

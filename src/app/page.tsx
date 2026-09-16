@@ -1,8 +1,10 @@
 'use client';
 
-import ThemeToggle from '../components/ThemeToggle';
-import LiveStatusWidget from '../components/LiveStatusWidget';
-import ResetIndicator from '../components/ResetIndicator';
+import ThemeToggle from '@/components/ThemeToggle';
+import LiveStatusWidget from '@/components/LiveStatusWidget';
+import ResetIndicator from '@/components/ResetIndicator';
+import UsageTrendChart from '@/components/UsageTrendChart';
+import ConfigPanel from '@/components/ConfigPanel';
 
 export default function Page() {
   return (
@@ -16,6 +18,8 @@ export default function Page() {
         <p className="text-lg">Gemini Quota Monitor 是一款 Tampermonkey 用户脚本，旨在跟踪并显示 Gemini 免费层级额度在不同 Google 域名（AI Studio 和 Gemini Web）上的使用情况。</p>
         
         <ResetIndicator />
+        <UsageTrendChart />
+        <ConfigPanel />
 
         <h2>功能特性</h2>
         <ul>
@@ -29,7 +33,7 @@ export default function Page() {
         <ol>
           <li><strong>安装扩展</strong>：确保您的浏览器已安装 <a href="https://www.tampermonkey.net/">Tampermonkey</a> 扩展。</li>
           <li><strong>安装脚本</strong>：点击下方链接进行一键安装：<br/>
-             <a href="https://github.com/sutchan/Gemini-Quota-Monitor/raw/refs/heads/main/gemini-quota-monitor.user.js">点击安装 Gemini Quota Monitor</a>
+             <a href="https://github.com/sutchan/Gemini-Quota-Monitor/raw/refs/heads/main/src/scripts/gemini-quota-monitor.user.js">点击安装 Gemini Quota Monitor</a>
           </li>
           <li><strong>验证安装</strong>：
             <ul>
