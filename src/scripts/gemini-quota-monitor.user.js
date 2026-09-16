@@ -22,18 +22,53 @@
 
     // --- Config & State ---
     const STORAGE_KEY = "Gemini_Universal_Usage_Stats";
+    const HISTORY_KEY = "Gemini_Usage_History";
     const SETTINGS_KEY = "Gemini_Monitor_Settings";
-    const MODEL_LIMITS = {
+    const CUSTOM_MODELS_KEY = "Gemini_Custom_Models";
+
+    const DEFAULT_MODEL_LIMITS = {
         "gemini-1.5-flash": 1500,
         "gemini-1.5-pro": 50,
         "gemini-2.0-flash": 1500,
         "gemini-2.0-flash-lite": 1500,
         "gemini-2.0-pro-exp": 50,
-        "gemini-3-pro": 50,
-        "gemini-3-flash": 1500,
+        "gemini-2.0-flash-thinking-exp": 1500,
+        "gemini-3.0-pro": 50,
+        "gemini-3.0-flash": 1500,
         "gemini-3.1-pro": 50,
         "gemini-3.1-flash-lite": 1500
     };
+
+    function getModelLimits() {
+        const custom = GM_getValue(CUSTOM_MODELS_KEY, {});
+        return { ...DEFAULT_MODEL_LIMITS, ...custom };
+    }
+
+    function syncNewModel(modelName) {
+        if (!modelName) return;
+        const limits = getModelLimits();
+        if (!limits[modelName]) {
+            log("New model discovered:", modelName);
+            const custom = GM_getValue(CUSTOM_MODELS_KEY, {});
+            // 根据关键词简单推断限额，默认为 50
+            let estimatedLimit = 50;
+            if (modelName.includes('flash') || modelName.includes('lite')) estimatedLimit = 1500;
+            
+            custom[modelName] = estimatedLimit;
+            GM_setValue(CUSTOM_MODELS_KEY, custom);
+            
+            // 刷新 UI 中的下拉菜单（如果已渲染）
+            if (shadow) {
+                const select = shadow.getElementById('select-model');
+                if (select) {
+                    const opt = document.createElement('option');
+                    opt.value = modelName;
+                    opt.textContent = modelName;
+                    select.appendChild(opt);
+                }
+            }
+        }
+    }
 
     function getSettings() {
         return GM_getValue(SETTINGS_KEY, { selectedModel: "gemini-1.5-flash", dailyLimit: 1500, debugMode: false });
@@ -48,10 +83,29 @@
         let stats = GM_getValue(STORAGE_KEY, { utcDate: currentUTC, count: 0, errorCount: 0 });
         
         if (stats.utcDate !== currentUTC) {
+            // 在重置前保存历史记录
+            saveToHistory(stats);
+            
             stats = { utcDate: currentUTC, count: 0, errorCount: 0 };
             GM_setValue(STORAGE_KEY, stats);
         }
         return stats;
+    }
+
+    function saveToHistory(oldStats) {
+        let history = GM_getValue(HISTORY_KEY, []);
+        // 检查是否已经存在该日期的记录，避免重复
+        if (!history.find(h => h.date === oldStats.utcDate)) {
+            history.push({ date: oldStats.utcDate, count: oldStats.count });
+        }
+        // 只保留最近 7 天
+        history = history.sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 7);
+        GM_setValue(HISTORY_KEY, history);
+        log("History updated", history);
+    }
+
+    function getHistory() {
+        return GM_getValue(HISTORY_KEY, []);
     }
 
     function log(...args) {
@@ -148,6 +202,14 @@
             }
             .settings-panel select:focus, .settings-panel input:focus { border-color: #8ab4f8; }
             .error-badge { background: #ea4335; color: #fff; font-size: 9px; padding: 1px 5px; border-radius: 4px; font-weight: bold; margin-left: 6px; vertical-align: middle; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+            
+            /* History Styles */
+            .history-panel { display: none; margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px; }
+            .history-title { font-size: 10px; font-weight: 700; color: #8ab4f8; margin-bottom: 6px; display: flex; justify-content: space-between; }
+            .history-list { display: flex; flex-direction: column; gap: 4px; }
+            .history-item { display: flex; justify-content: space-between; font-size: 10px; opacity: 0.8; font-family: monospace; }
+            .history-bar-bg { flex-grow: 1; height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; margin: 0 8px; align-self: center; overflow: hidden; }
+            .history-bar-fill { height: 100%; background: #8ab4f8; border-radius: 2px; transition: width 0.3s; }
         `;
         
         const card = document.createElement('div');
@@ -178,10 +240,16 @@
                 </div>
                 <div class="footer">Reset UTC 00:00</div>
             </div>
+            <div id="panel-history" class="history-panel">
+                <div class="history-title"><span>LAST 7 DAYS</span><span id="history-avg">AVG: 0</span></div>
+                <div id="history-list" class="history-list">
+                    <!-- History items will be injected here -->
+                </div>
+            </div>
             <div id="panel-settings" class="settings-panel">
                 <label>MODEL SELECT</label>
                 <select id="select-model">
-                    ${Object.keys(MODEL_LIMITS).map(m => `<option value="${m}">${m}</option>`).join('')}
+                    ${Object.keys(getModelLimits()).map(m => `<option value="${m}">${m}</option>`).join('')}
                 </select>
                 <label>DAILY LIMIT</label>
                 <input id="input-limit" type="number">
@@ -202,7 +270,19 @@
         $('btn-settings').onclick = (e) => {
             e.stopPropagation();
             const p = $('panel-settings');
+            const h = $('panel-history');
             p.style.display = p.style.display === 'block' ? 'none' : 'block';
+            h.style.display = 'none'; // 互斥显示
+        };
+
+        // 双击标题切换历史记录
+        shadow.querySelector('.title').onclick = (e) => {
+            e.stopPropagation();
+            const h = $('panel-history');
+            const p = $('panel-settings');
+            h.style.display = h.style.display === 'block' ? 'none' : 'block';
+            p.style.display = 'none';
+            if (h.style.display === 'block') renderHistory();
         };
 
         $('btn-collapse').onclick = (e) => {
@@ -231,7 +311,7 @@
         modelSelect.onchange = () => {
             const s = getSettings();
             s.selectedModel = modelSelect.value;
-            s.dailyLimit = MODEL_LIMITS[modelSelect.value];
+            s.dailyLimit = getModelLimits()[modelSelect.value];
             limitInput.value = s.dailyLimit;
             GM_setValue(SETTINGS_KEY, s);
             updateUI(getStats());
@@ -279,6 +359,35 @@
         log("UI Re-injected & Isolated");
     }
 
+    function renderHistory() {
+        if (!shadow) return;
+        const list = shadow.getElementById('history-list');
+        const avgText = shadow.getElementById('history-avg');
+        const history = getHistory();
+        const limit = getSettings().dailyLimit;
+
+        if (history.length === 0) {
+            list.innerHTML = '<div style="font-size:9px; opacity:0.5; text-align:center; padding:10px;">No history yet</div>';
+            return;
+        }
+
+        let total = 0;
+        list.innerHTML = history.map(h => {
+            total += h.count;
+            const p = Math.min((h.count / limit) * 100, 100);
+            const dateShort = h.date.split('-').slice(1).join('/');
+            return `
+                <div class="history-item">
+                    <span>${dateShort}</span>
+                    <div class="history-bar-bg"><div class="history-bar-fill" style="width: ${p}%"></div></div>
+                    <span>${h.count}</span>
+                </div>
+            `;
+        }).join('');
+
+        avgText.textContent = `AVG: ${Math.round(total / history.length)}`;
+    }
+
     function updateUI(stats) {
         if (!shadow) return;
         const countText = shadow.getElementById('text-count');
@@ -316,11 +425,30 @@
 
     // --- Interception Core ---
 
-    function handleActivity(status) {
+    function extractModelName(url, body) {
+        // 从 AI Studio URL 提取: /models/gemini-1.5-pro:generateContent
+        const aiStudioMatch = url.match(/\/models\/([^:]+)/);
+        if (aiStudioMatch) return aiStudioMatch[1];
+
+        // 从请求体尝试提取 (通用)
+        if (body && typeof body === 'string') {
+            const bodyMatch = body.match(/"model"\s*:\s*"models\/([^"]+)"/);
+            if (bodyMatch) return bodyMatch[1];
+        }
+
+        return null;
+    }
+
+    function handleActivity(status, url = "", body = null) {
+        const detectedModel = extractModelName(url, body);
+        if (detectedModel) {
+            syncNewModel(detectedModel);
+        }
+
         let stats = getStats();
         if (status === 200) {
             stats.count += 1;
-            log("Success tracked. Total:", stats.count);
+            log("Success tracked. Total:", stats.count, detectedModel ? `[Model: ${detectedModel}]` : "");
         } else if (status === 429) {
             stats.errorCount += 1;
             log("Rate limit detected. Total errors:", stats.errorCount);
@@ -340,12 +468,12 @@
     };
 
     const rawSend = XMLHttpRequest.prototype.send;
-    XMLHttpRequest.prototype.send = function() {
+    XMLHttpRequest.prototype.send = function(body) {
         this.addEventListener('load', () => {
             const url = this._monitorUrl || "";
             if (url.includes('GenerateContent') || url.includes('SendMessage') || url.includes('generate_content')) {
                 log("XHR Activity Detected", url, this.status);
-                handleActivity(this.status);
+                handleActivity(this.status, url, body);
             }
         });
         return rawSend.apply(this, arguments);
@@ -355,11 +483,14 @@
     const rawFetch = window.fetch;
     window.fetch = async function(...args) {
         const url = args[0]?.toString() || "";
+        const options = args[1] || {};
+        const body = options.body;
+        
         try {
             const response = await rawFetch.apply(this, args);
             if (url.includes('GenerateContent') || url.includes('SendMessage') || url.includes('generate_content')) {
                 log("Fetch Activity Detected", url, response.status);
-                handleActivity(response.status);
+                handleActivity(response.status, url, body);
             }
             return response;
         } catch (err) {

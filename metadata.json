@@ -1,5 +1,6 @@
 {
-  "name": "Gemini Quota Monitor v1.8.3",
-  "description": "A Tampermonkey user script designed to track and display the usage of Gemini's free tier quota across different Google domains (AI Studio and Gemini Web).",
-  "requestFramePermissions": []
+  "name": "Gemini Quota Monitor",
+  "description": "实时监控并管理您的 Gemini 免费额度。支持 AI Studio 与 Gemini Web 跨站同步、历史趋势分析及自动发现新模型。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
